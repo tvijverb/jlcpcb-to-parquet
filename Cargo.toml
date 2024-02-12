@@ -1,0 +1,8 @@
+[package]
+name = "jlc-duckdb-to-parquet"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+duckdb = { version = "0.9.2", features = ["bundled"] }
+polars = { version = "0.37.0", features = ["parquet", "lazy", "object", "streaming"] }
