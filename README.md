@@ -11,7 +11,7 @@ wget and p7zip-full
 ```bash
 wget https://yaqwsx.github.io/jlcparts/data/cache.zip https://yaqwsx.github.io/jlcparts/data/cache.z0{1..8}
 7z x cache.zip
-``
+```
 
 2. Create parquet files using this repository
 
