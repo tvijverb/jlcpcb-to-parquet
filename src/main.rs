@@ -45,6 +45,7 @@ struct Component {
     resistance: Option<i64>,
     inductance: Option<i64>,
     capacitance: Option<i64>,
+    dielectric: Option<String>,
 }
 
 fn main() -> Result<(), duckdb::Error> {
@@ -58,6 +59,7 @@ fn main() -> Result<(), duckdb::Error> {
     conn.execute("ALTER TABLE components ADD resistance INTEGER;", params![])?;
     conn.execute("ALTER TABLE components ADD inductance INTEGER;", params![])?;
     conn.execute("ALTER TABLE components ADD capacitance INTEGER;", params![])?;
+    conn.execute("ALTER TABLE components ADD dielectric TEXT;", params![])?;
 
     let mut stmt = conn.prepare("SELECT * from components")?;
     let component_iter = stmt.query_map([], |row| {
@@ -81,6 +83,7 @@ fn main() -> Result<(), duckdb::Error> {
             resistance: row.get(16)?,
             inductance: row.get(17)?,
             capacitance: row.get(18)?,
+            dielectric: row.get(19)?,
         })
     })?;
 
@@ -106,6 +109,18 @@ fn main() -> Result<(), duckdb::Error> {
             let capacitance_value = parse_capacitance::parse_capacitance_description(&component.description);
             if let Some(value) = capacitance_value {
                 component.capacitance = Some(value as i64);
+            }
+        }
+        // Dielectric is only for capacitors
+        if component.category_id >= 26 && component.category_id <= 45 {
+            if component.description.contains("C0G") {
+                component.dielectric = Some("C0G".to_string());
+            } else if component.description.contains("X7R") {
+                component.dielectric = Some("X7R".to_string());
+            } else if component.description.contains("X5R") {
+                component.dielectric = Some("X5R".to_string());
+            } else if component.description.contains("Y5V") {
+                component.dielectric = Some("Y5V".to_string());
             }
         }
         // add the component to the list if it is in stock
@@ -135,6 +150,7 @@ fn main() -> Result<(), duckdb::Error> {
             Series::new("resistance", all_components.iter().map(|c| c.resistance).collect::<Vec<_>>()),
             Series::new("inductance", all_components.iter().map(|c| c.inductance).collect::<Vec<_>>()),
             Series::new("capacitance", all_components.iter().map(|c| c.capacitance).collect::<Vec<_>>()),
+            Series::new("dielectric", all_components.iter().map(|c| c.dielectric.clone()).collect::<Vec<_>>()),
         ]
     ).unwrap();
     let path = "components.parquet".into();
