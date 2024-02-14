@@ -55,11 +55,28 @@ fn main() -> Result<(), duckdb::Error> {
     // Open the SQLite database file
     let conn = Connection::open("cache.sqlite3")?;
 
+    // Check if idx_components_lcsc index exists
+    let row: Result<Option<String>, duckdb::Error> = conn.query_row("SELECT * FROM sqlite_master WHERE type='index' AND name='idx_components_lcsc'", [], |row| {
+        row.get(0)
+    });
+
+    if let Ok(_) = row {
+        conn.execute("DROP INDEX idx_components_lcsc", params![])?;
+    }
     conn.execute("CREATE INDEX idx_components_lcsc ON components(lcsc)", params![])?;
-    conn.execute("ALTER TABLE components ADD resistance INTEGER;", params![])?;
-    conn.execute("ALTER TABLE components ADD inductance INTEGER;", params![])?;
-    conn.execute("ALTER TABLE components ADD capacitance INTEGER;", params![])?;
-    conn.execute("ALTER TABLE components ADD dielectric TEXT;", params![])?;
+
+    // Check if resistance column exists, if not add resistance, inductance, capacitance and dielectric columns
+    let row: Result<Option<i128>, duckdb::Error> = conn.query_row("SELECT * FROM components limit 1;", [], |row| {
+        row.get(16)
+    });
+
+    // if the query fails, the table does not exist, so create it
+    if let Err(_) = row {
+        conn.execute("ALTER TABLE components ADD resistance INTEGER;", params![])?;
+        conn.execute("ALTER TABLE components ADD inductance INTEGER;", params![])?;
+        conn.execute("ALTER TABLE components ADD capacitance INTEGER;", params![])?;
+        conn.execute("ALTER TABLE components ADD dielectric TEXT;", params![])?;
+    }
 
     let mut stmt = conn.prepare("SELECT * from components")?;
     let component_iter = stmt.query_map([], |row| {
