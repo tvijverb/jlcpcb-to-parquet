@@ -38,7 +38,7 @@ struct Component {
     stock: i64,
     price: String,
     last_update: i64,
-    extra: String,
+    extra: Option<String>,
     flag: i64,
     last_on_stock: i64,
     preferred: i64,
@@ -93,7 +93,7 @@ fn main() -> Result<(), duckdb::Error> {
             stock: row.get(9)?,
             price: row.get(10)?,
             last_update: row.get(11)?,
-            extra: row.get(12)?,
+            extra: None, //row.get(12)?, outcommented to save memory
             flag: row.get(13)?,
             last_on_stock: row.get(14)?,
             preferred: row.get(15)?,
