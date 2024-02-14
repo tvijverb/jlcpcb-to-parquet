@@ -47,8 +47,10 @@ jobs:
         run: |
           git config --global user.email "jdoe@example.com"
           git config --global user.name "J. Doe"
-      - name: Install musl-tools on Linux
-        run: sudo apt-get update --yes && sudo apt-get install --yes musl-tools g++
+
+      - name: Install g++ on Linux
+        run: sudo apt-get update --yes && sudo apt-get install --yes g++
+        if: contains(matrix.platform.name, 'linux')
 
       - name: Build binary
         uses: houseabsolute/actions-rust-cross@v0
