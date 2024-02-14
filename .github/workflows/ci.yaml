@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - "master"
+    tags:
+      - "v*.*.*"
 env:
   CRATE_NAME: jlc-duckdb-to-parquet
   GITHUB_TOKEN: ${{ github.token }}
@@ -85,5 +87,4 @@ jobs:
         with:
           draft: false
           files: "jlc-duckdb-to-parquet-*"
-          body_path: Changes.md
         # if: matrix.toolchain == 'stable' && startsWith( github.ref, 'refs/tags/v' )
