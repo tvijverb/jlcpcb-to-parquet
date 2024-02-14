@@ -4,6 +4,10 @@ on:
   push:
     tags:
       - "v*.*.*"
+
+permissions:
+  contents: write
+
 env:
   CRATE_NAME: jlc-duckdb-to-parquet
   GITHUB_TOKEN: ${{ github.token }}
