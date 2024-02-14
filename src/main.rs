@@ -55,11 +55,11 @@ fn main() -> Result<(), duckdb::Error> {
     // Open the SQLite database file
     let conn = Connection::open("cache.sqlite3")?;
 
-    // conn.execute("CREATE INDEX idx_components_lcsc ON components(lcsc)", params![])?;
-    // conn.execute("ALTER TABLE components ADD resistance INTEGER;", params![])?;
-    // conn.execute("ALTER TABLE components ADD inductance INTEGER;", params![])?;
-    // conn.execute("ALTER TABLE components ADD capacitance INTEGER;", params![])?;
-    // conn.execute("ALTER TABLE components ADD dielectric TEXT;", params![])?;
+    conn.execute("CREATE INDEX idx_components_lcsc ON components(lcsc)", params![])?;
+    conn.execute("ALTER TABLE components ADD resistance INTEGER;", params![])?;
+    conn.execute("ALTER TABLE components ADD inductance INTEGER;", params![])?;
+    conn.execute("ALTER TABLE components ADD capacitance INTEGER;", params![])?;
+    conn.execute("ALTER TABLE components ADD dielectric TEXT;", params![])?;
 
     let mut stmt = conn.prepare("SELECT * from components")?;
     let component_iter = stmt.query_map([], |row| {
