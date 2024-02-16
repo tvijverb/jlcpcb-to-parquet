@@ -6,38 +6,37 @@ pub fn parse_resistance_description(component_description: &str) -> Option<f64> 
         if part.ends_with("pΩ") {
             let numeric_part = part.trim_end_matches("pΩ");
             if let Ok(value) = numeric_part.parse::<f64>() {
-                resistance_value = Some(value* 1e-12);
+                resistance_value = Some(value * 1e-12);
                 break;
             }
-        } 
-        else if part.ends_with("nΩ") {
+        } else if part.ends_with("nΩ") {
             let numeric_part = part.trim_end_matches("nΩ");
             if let Ok(value) = numeric_part.parse::<f64>() {
-                resistance_value = Some(value*1e-9);
+                resistance_value = Some(value * 1e-9);
                 break;
             }
         } else if part.ends_with("uΩ") {
             let numeric_part = part.trim_end_matches("uΩ");
             if let Ok(value) = numeric_part.parse::<f64>() {
-                resistance_value = Some(value*1e-6);
+                resistance_value = Some(value * 1e-6);
                 break;
             }
         } else if part.ends_with("mΩ") {
             let numeric_part = part.trim_end_matches("mΩ");
             if let Ok(value) = numeric_part.parse::<f64>() {
-                resistance_value = Some(value*1e-3);
+                resistance_value = Some(value * 1e-3);
                 break;
             }
         } else if part.ends_with("kΩ") {
             let numeric_part = part.trim_end_matches("kΩ");
             if let Ok(value) = numeric_part.parse::<f64>() {
-                resistance_value = Some(value*1e3);
+                resistance_value = Some(value * 1e3);
                 break;
             }
         } else if part.ends_with("MΩ") {
             let numeric_part = part.trim_end_matches("MΩ");
             if let Ok(value) = numeric_part.parse::<f64>() {
-                resistance_value = Some(value*1e6);
+                resistance_value = Some(value * 1e6);
                 break;
             }
         } else if part.ends_with('Ω') {
@@ -46,7 +45,7 @@ pub fn parse_resistance_description(component_description: &str) -> Option<f64> 
                 resistance_value = Some(value);
                 break;
             }
-        } 
+        }
     }
     resistance_value
 }

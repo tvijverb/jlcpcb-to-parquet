@@ -51,7 +51,7 @@ pub fn parse_capacitance_description(component_description: &str) -> Option<f64>
                 capacitance_value = Some(value * 1_000_000_000_000.0);
                 break;
             }
-        } 
+        }
     }
     capacitance_value
 }

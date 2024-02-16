@@ -51,7 +51,7 @@ pub fn parse_inductance_description(component_description: &str) -> Option<f64> 
                 inductance_value = Some(value * 1_000_000_000_000.0);
                 break;
             }
-        } 
+        }
     }
     inductance_value
 }
