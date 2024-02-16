@@ -1,5 +1,5 @@
 [package]
-name = "jlc-duckdb-to-parquet"
+name = "jlcpcb-to-parquet"
 version = "0.2.0"
 edition = "2021"
 

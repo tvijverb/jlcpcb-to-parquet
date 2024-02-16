@@ -1,1 +1,4 @@
 /target
+/data
+cache.sqlite3
+*.parquet

@@ -869,7 +869,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9028f49264629065d057f340a86acb84867925865f73bbf8d47b4d149a7e88b8"
 
 [[package]]
-name = "jlc-duckdb-to-parquet"
+name = "jlcpcb-to-parquet"
 version = "0.2.0"
 dependencies = [
  "polars",
