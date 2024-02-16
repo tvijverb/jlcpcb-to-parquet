@@ -1,4 +1,4 @@
-use duckdb::{Connection,params};
+use sqlx::{sqlite::SqlitePool, Row};
 use polars::prelude::*;
 pub mod parse_resistance;
 pub mod parse_inductance;
@@ -24,6 +24,7 @@ pub mod parse_capacitance;
 // 16	resistance	INTEGER	0 // added by me
 // 17	inductance	INTEGER	0 // added by me
 // 18	capacitance	INTEGER	0 // added by me
+// 19   dielectric  TEXT 0    // added by me
 #[derive(Debug, Clone)]
 struct Component {
     lcsc: i64,
@@ -48,65 +49,60 @@ struct Component {
     dielectric: Option<String>,
 }
 
-fn main() -> Result<(), duckdb::Error> {
-    // Install SQLite3 Extension in DuckDB
-    let conn = Connection::open_in_memory()?;
-    conn.execute("INSTALL sqlite", params![])?;
+#[tokio::main]
+async fn main() -> Result<(), sqlx::Error> {
     // Open the SQLite database file
-    let conn = Connection::open("cache.sqlite3")?;
+    let pool = SqlitePool::connect("sqlite:cache.sqlite3").await?;
 
     // Check if idx_components_lcsc index exists
-    let row: Result<Option<String>, duckdb::Error> = conn.query_row("SELECT * FROM sqlite_master WHERE type='index' AND name='idx_components_lcsc'", [], |row| {
-        row.get(0)
-    });
+    let row: Result<Option<(String,)>,sqlx::Error> = sqlx::query_as("DROP INDEX idx_components_lcsc")
+        .fetch_optional(&pool).await;
 
-    if let Ok(_) = row {
-        conn.execute("DROP INDEX idx_components_lcsc", params![])?;
-    }
-    conn.execute("CREATE INDEX idx_components_lcsc ON components(lcsc)", params![])?;
+    // if row.is_some() {
+    //     sqlx::query("DROP INDEX idx_components_lcsc").execute(&pool).await?;
+    sqlx::query("CREATE INDEX idx_components_lcsc ON components(lcsc)").execute(&pool).await?;
 
     // Check if resistance column exists, if not add resistance, inductance, capacitance and dielectric columns
-    let row: Result<Option<i128>, duckdb::Error> = conn.query_row("SELECT * FROM components limit 1;", [], |row| {
-        row.get(16)
-    });
+    let row: Result<Option<i64>, sqlx::Error> = sqlx::query_scalar("SELECT resistance FROM components limit 1;")
+        .fetch_optional(&pool).await;
 
     // if the query fails, the table does not exist, so create it
-    if let Err(_) = row {
-        conn.execute("ALTER TABLE components ADD resistance INTEGER;", params![])?;
-        conn.execute("ALTER TABLE components ADD inductance INTEGER;", params![])?;
-        conn.execute("ALTER TABLE components ADD capacitance INTEGER;", params![])?;
-        conn.execute("ALTER TABLE components ADD dielectric TEXT;", params![])?;
+    if row.is_err() {
+        sqlx::query("ALTER TABLE components ADD resistance INTEGER;").execute(&pool).await?;
+        sqlx::query("ALTER TABLE components ADD inductance INTEGER;").execute(&pool).await?;
+        sqlx::query("ALTER TABLE components ADD capacitance INTEGER;").execute(&pool).await?;
+        sqlx::query("ALTER TABLE components ADD dielectric TEXT;").execute(&pool).await?;
     }
 
-    let mut stmt = conn.prepare("SELECT * from components")?;
-    let component_iter = stmt.query_map([], |row| {
-        Ok(Component {
-            lcsc: row.get(0)?,
-            category_id: row.get(1)?,
-            mfr: row.get(2)?,
-            package: row.get(3)?,
-            joints: row.get(4)?,
-            manufacturer_id: row.get(5)?,
-            basic: row.get(6)?,
-            description: row.get(7)?,
-            datasheet: row.get(8)?,
-            stock: row.get(9)?,
-            price: row.get(10)?,
-            last_update: row.get(11)?,
-            extra: None, //row.get(12)?, outcommented to save memory
-            flag: row.get(13)?,
-            last_on_stock: row.get(14)?,
-            preferred: row.get(15)?,
-            resistance: row.get(16)?,
-            inductance: row.get(17)?,
-            capacitance: row.get(18)?,
-            dielectric: row.get(19)?,
-        })
-    })?;
+    let rows = sqlx::query("SELECT * from components where stock > 0").fetch_all(&pool).await?;
 
-    let mut all_components = vec![];
-    for component in component_iter {
-        let mut component = component?;
+    let mut all_components: Vec<Component> = vec![];
+    for row in rows {
+        all_components.push(Component {
+            lcsc: row.get::<i64,_>(0),
+            category_id: row.get::<i64,_>(1),
+            mfr: row.get::<String,_>(2),
+            package: row.get::<String,_>(3),
+            joints: row.get::<i64,_>(4),
+            manufacturer_id: row.get::<i64,_>(5),
+            basic: row.get::<i64,_>(6),
+            description: row.get::<String,_>(7),
+            datasheet: row.get::<String,_>(8),
+            stock: row.get::<i64,_>(9),
+            price: row.get::<String,_>(10),
+            last_update: row.get::<i64,_>(11),
+            extra: row.get::<Option<String>,_>(12),
+            flag: row.get::<i64,_>(13),
+            last_on_stock: row.get::<i64,_>(14),
+            preferred: row.get::<i64,_>(15),
+            resistance: row.get::<Option<i64>,_>(16),
+            inductance: row.get::<Option<i64>,_>(17),
+            capacitance: row.get::<Option<i64>,_>(18),
+            dielectric: row.get::<Option<String>,_>(19),
+        });
+    };
+
+    for component in all_components.iter_mut() {
         // Resistors are in subcategories 46-63
         if component.category_id >= 46 && component.category_id <= 63 {
             let resistance_value = parse_resistance::parse_resistance_description(&component.description);
@@ -140,10 +136,6 @@ fn main() -> Result<(), duckdb::Error> {
                 component.dielectric = Some("Y5V".to_string());
             }
         }
-        // add the component to the list if it is in stock
-        if component.stock > 0 {
-            all_components.push(component);
-        }
     }
 
     let df_components = DataFrame::new(
@@ -173,7 +165,6 @@ fn main() -> Result<(), duckdb::Error> {
     let path = "components.parquet".into();
     df_components.lazy().sink_parquet(path, Default::default()).unwrap();
 
-    let _res = conn.close();
 
     Ok(())
 }
