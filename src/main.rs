@@ -66,28 +66,6 @@ async fn main() -> Result<(), sqlx::Error> {
         .execute(&pool)
         .await?;
 
-    // Check if resistance column exists, if not add resistance, inductance, capacitance and dielectric columns
-    let row: Result<Option<i64>, sqlx::Error> =
-        sqlx::query_scalar("SELECT resistance FROM components limit 1;")
-            .fetch_optional(&pool)
-            .await;
-
-    // if the query fails, the table does not exist, so create it
-    if row.is_err() {
-        sqlx::query("ALTER TABLE components ADD resistance INTEGER;")
-            .execute(&pool)
-            .await?;
-        sqlx::query("ALTER TABLE components ADD inductance INTEGER;")
-            .execute(&pool)
-            .await?;
-        sqlx::query("ALTER TABLE components ADD capacitance INTEGER;")
-            .execute(&pool)
-            .await?;
-        sqlx::query("ALTER TABLE components ADD dielectric TEXT;")
-            .execute(&pool)
-            .await?;
-    }
-
     let rows = sqlx::query("SELECT * from components where stock > 0")
         .fetch_all(&pool)
         .await?;
@@ -107,14 +85,14 @@ async fn main() -> Result<(), sqlx::Error> {
             stock: row.get::<i64, _>(9),
             price: row.get::<String, _>(10),
             last_update: row.get::<i64, _>(11),
-            extra: row.get::<Option<String>, _>(12),
+            extra: None, //row.get::<Option<String>, _>(12),
             flag: row.get::<i64, _>(13),
             last_on_stock: row.get::<i64, _>(14),
             preferred: row.get::<i64, _>(15),
-            resistance: row.get::<Option<i64>, _>(16),
-            inductance: row.get::<Option<i64>, _>(17),
-            capacitance: row.get::<Option<i64>, _>(18),
-            dielectric: row.get::<Option<String>, _>(19),
+            resistance: None,
+            inductance: None,
+            capacitance: None,
+            dielectric: None,
         });
     }
 
