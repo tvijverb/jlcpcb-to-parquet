@@ -41,7 +41,7 @@ jobs:
             target: x86_64-pc-windows-msvc
             bin: jlcpcb-to-parquet.exe
             name: jlcpcb-to-parquet-x86_64-pc-windows-msvc.zip
-          - os_name: macOS-aarch64
+          - os_name: MacOS-aarch64
             os: macOS-latest
             target: aarch64-apple-darwin
             bin: jlcpcb-to-parquet
