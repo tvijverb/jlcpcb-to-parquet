@@ -1,4 +1,4 @@
-name: Tests and release
+name: Release
 
 on:
   push:
@@ -31,6 +31,11 @@ jobs:
             target: aarch64-unknown-linux-gnu
             bin: jlcpcb-to-parquet
             name: jlcpcb-to-parquet-aarch64-unknown-linux-gnu.tar.gz
+          - os_name: Linux-aarch64-unknown-linux-musl
+            os: ubuntu-22.04
+            target: aarch64-unknown-linux-musl
+            bin: jlcpcb-to-parquet
+            name: jlcpcb-to-parquet-aarch64-unknown-linux-musl.tar.gz
           - os_name: Windows-x86_64
             os: windows-latest
             target: x86_64-pc-windows-msvc
