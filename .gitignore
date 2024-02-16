@@ -2,4 +2,3 @@
 /data
 cache.sqlite3
 *.parquet
-Cargo.lock
