@@ -6,6 +6,7 @@ description = "A tool to convert JLCPCB Parts Library to Parquet"
 homepage = "https://github.com/tvijverb/jlcpcb-to-parquet"
 repository = "https://github.com/tvijverb/jlcpcb-to-parquet"
 license = "MIT"
+readme = "README.md"
 
 [dependencies]
 polars = { version = "0.37.0", features = ["parquet", "lazy", "object", "streaming"] }
