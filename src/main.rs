@@ -3,6 +3,7 @@ use sqlx::{sqlite::SqlitePool, Row};
 pub mod parse_capacitance;
 pub mod parse_inductance;
 pub mod parse_resistance;
+pub mod categories;
 
 // components table query: "PRAGMA table_info(components);"
 // 0	lcsc	INTEGER	1
@@ -60,17 +61,18 @@ async fn main() -> Result<(), sqlx::Error> {
             .fetch_optional(&pool)
             .await;
 
-    // if row.is_some() {
-    //     sqlx::query("DROP INDEX idx_components_lcsc").execute(&pool).await?;
     sqlx::query("CREATE INDEX idx_components_lcsc ON components(lcsc)")
         .execute(&pool)
         .await?;
+
+    // Get required category ids
+    let filtered_categories = categories::get_filtered_categories(&pool).await?;
 
     let rows = sqlx::query("SELECT * from components where stock > 0")
         .fetch_all(&pool)
         .await?;
 
-    let mut all_components: Vec<Component> = vec![];
+    let mut all_components: Vec<Component> = Vec::with_capacity(rows.len());
     for row in rows {
         all_components.push(Component {
             lcsc: row.get::<i64, _>(0),
@@ -257,11 +259,20 @@ async fn main() -> Result<(), sqlx::Error> {
         ),
     ])
     .unwrap();
+
+    // Write the Complete DataFrame to a parquet file
     let path = "components.parquet".into();
     df_components
+        .clone()
         .lazy()
         .sink_parquet(path, Default::default())
         .unwrap();
 
+    // Write individual DataFrames to parquet files (one for each category)
+    let res = categories::category_to_parquet::category_to_parquet(df_components.lazy(), filtered_categories)
+        .await;
+    if res.is_err() {
+        println!("Error: {:?}", res.err());
+    }
     Ok(())
 }
