@@ -30,7 +30,7 @@ pub async fn get_filtered_categories(pool: &sqlx::SqlitePool) -> Result<Filtered
         if category.subcategory == "Multilayer Ceramic Capacitors MLCC - SMD/SMT" {
             smd_capacitor_id = category.id;
         }
-        if category.subcategory == "Inductors (SMD)" {
+        if category.category == "Inductors/Coils/Transformers" && category.subcategory == "Inductors (SMD)" {
             smd_inductor_id = category.id;
         }
     }
