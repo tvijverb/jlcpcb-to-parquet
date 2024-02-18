@@ -21,6 +21,12 @@ pub fn parse_resistance_description(component_description: &str) -> Option<f64> 
                 resistance_value = Some(value * 1e-6);
                 break;
             }
+        } else if part.ends_with("μΩ") {
+            let numeric_part = part.trim_end_matches("μΩ");
+            if let Ok(value) = numeric_part.parse::<f64>() {
+                resistance_value = Some(value * 1e-6);
+                break;
+            }  
         } else if part.ends_with("mΩ") {
             let numeric_part = part.trim_end_matches("mΩ");
             if let Ok(value) = numeric_part.parse::<f64>() {

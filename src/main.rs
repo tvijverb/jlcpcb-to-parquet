@@ -3,6 +3,8 @@ use sqlx::{sqlite::SqlitePool, Row};
 pub mod parse_capacitance;
 pub mod parse_inductance;
 pub mod parse_resistance;
+pub mod parse_current;
+pub mod parse_voltage;
 pub mod categories;
 
 // components table query: "PRAGMA table_info(components);"
@@ -48,6 +50,8 @@ struct Component {
     inductance: Option<i64>,
     capacitance: Option<i64>,
     dielectric: Option<String>,
+    current: Option<f64>,
+    voltage: Option<f64>,
 }
 
 #[tokio::main]
@@ -95,34 +99,42 @@ async fn main() -> Result<(), sqlx::Error> {
             inductance: None,
             capacitance: None,
             dielectric: None,
+            current: None,
+            voltage: None,
         });
     }
 
     for component in all_components.iter_mut() {
-        // Resistors are in subcategories 46-63
-        if component.category_id >= 46 && component.category_id <= 63 {
-            let resistance_value =
-                parse_resistance::parse_resistance_description(&component.description);
-            if let Some(value) = resistance_value {
-                component.resistance = Some(value as i64);
-            }
+        let resistance_value =
+            parse_resistance::parse_resistance_description(&component.description);
+        if let Some(value) = resistance_value {
+            component.resistance = Some(value as i64);
         }
-        // Inductors are in subcategories 12-25
-        if component.category_id >= 12 && component.category_id <= 25 {
-            let inductance_value =
-                parse_inductance::parse_inductance_description(&component.description);
-            if let Some(value) = inductance_value {
-                component.inductance = Some(value as i64);
-            }
+
+        let inductance_value =
+            parse_inductance::parse_inductance_description(&component.description);
+        if let Some(value) = inductance_value {
+            component.inductance = Some(value as i64);
         }
-        // Capacitors are in subcategories 26-45
-        if component.category_id >= 26 && component.category_id <= 45 {
-            let capacitance_value =
-                parse_capacitance::parse_capacitance_description(&component.description);
-            if let Some(value) = capacitance_value {
-                component.capacitance = Some(value as i64);
-            }
+        
+        let capacitance_value =
+            parse_capacitance::parse_capacitance_description(&component.description);
+        if let Some(value) = capacitance_value {
+            component.capacitance = Some(value as i64);
         }
+
+        let current_value =
+            parse_current::parse_current_description(&component.description);
+        if let Some(value) = current_value {
+            component.resistance = Some(value as i64);
+        }
+
+        let voltage_value =
+            parse_voltage::parse_voltage_description(&component.description);
+        if let Some(value) = voltage_value {
+            component.resistance = Some(value as i64);
+        }
+
         // Dielectric is only for capacitors
         if component.category_id >= 26 && component.category_id <= 45 {
             if component.description.contains("C0G") {
@@ -255,6 +267,20 @@ async fn main() -> Result<(), sqlx::Error> {
             all_components
                 .iter()
                 .map(|c| c.dielectric.clone())
+                .collect::<Vec<_>>(),
+        ),
+        Series::new(
+            "current",
+            all_components
+                .iter()
+                .map(|c| c.current)
+                .collect::<Vec<_>>(),
+        ),
+        Series::new(
+            "voltage",
+            all_components
+                .iter()
+                .map(|c| c.voltage)
                 .collect::<Vec<_>>(),
         ),
     ])
